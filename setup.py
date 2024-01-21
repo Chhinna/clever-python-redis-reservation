@@ -15,9 +15,9 @@ __version__ = '1.0.1'
 here = os.path.abspath(os.path.dirname(__file__))
 
 try:
-    with open(os.path.join(here, '../README.md')) as f:
+    with open(os.path.join(here, '../README.md'), encoding='utf-8') as f:
         README = f.read()
-    with open(os.path.join(here, '../CHANGES.md')) as f:
+    with open(os.path.join(here, '../CHANGES.md'), encoding='utf-8') as f:
         CHANGES = f.read()
 except:
     README = ''
