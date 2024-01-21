@@ -16,7 +16,7 @@ class ReserveException(Exception):
 
 
 class ReserveResource(object):
-    
+
   def __init__(self, redis, key, by, kvlogger=logger.Logger("redis-reservation"), lock_ttl=30*60, heartbeat_interval=10*60):
     self.key = 'reservation-{}'.format(key)
     self.val = '{}-{}-{}'.format(socket.gethostname(), by, os.getpid())
@@ -34,7 +34,7 @@ class ReserveResource(object):
       self.release()
       self.logger.info("reservation-released-on-sigterm")
     finally:
-      if self.previous_sigterm_handler != signal.SIG_DFL and self.previous_sigterm_handler != None:
+      if self.previous_sigterm_handler not in (signal.SIG_DFL, None):
         self.previous_sigterm_handler(signum, frame)
 
   @contextmanager
@@ -45,19 +45,19 @@ class ReserveResource(object):
       else:
         lock = self.reserve()
         if lock is True:
-          self.logger.info("reserved", dict(key=self.key))
+          self.logger.info("reserved", {key=self.key})
           yield True
         else:
-          self.logger.info("already-reserved", dict(key=self.key, by=self.redis.get(self.key).decode('utf-8')))
+          self.logger.info("already-reserved", {key=self.key, by=self.redis.get(self.key).decode('utf-8')})
           yield False
     except RedisError as err:
-      self.logger.error("redis-error", dict(err=repr(err)))
+      self.logger.error("redis-error", {err=repr(err)})
       yield err
     finally:
       try:
         self.release()
       except RedisError as err:
-        self.logger.error("redis-error", dict(err=repr(err)))
+        self.logger.error("redis-error", {err=repr(err)})
 
   def reserve(self):
     result = self.redis.set(self.key, self.val, nx=True, ex=self.lock_ttl)
@@ -99,13 +99,13 @@ class ReserveResource(object):
     result = self.redis.expire(self.key, self.lock_ttl)
     return result is 1 or result is True
     return False
-  
+
   def _heartbeat(self):
     if self.reserved is False:
       return
     if not (self.heartbeat_interval and self.heartbeat_interval > 0):
       return
-    
+
     self._set_expiration()
     self.heartbeat_thread = Timer(self.heartbeat_interval, self._heartbeat, ())
     self.heartbeat_thread.daemon = True  # don't keep app alive just for this thread
